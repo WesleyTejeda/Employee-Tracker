@@ -1,6 +1,9 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
-const console_table = require("console.table");
+const table = require("console.table");
+const departments = require("./classes/departments");
+const roles = require("./classes/roles");
+const employees = require("./classes/employees");
 require("dotenv").config();
 
 var connection = mysql.createConnection({
@@ -25,17 +28,7 @@ connection.connect(function(err) {
 
 let choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Quit'];
 
-let roles = ['Sales Lead', 'Salesperson', 'Lead Engineer','Software Engineer', 'Accountant','Legal Team Lead', 'Lawyer'];
-let departments = [];
-function getDepartments(){
-    connection.query("SELECT * from department",(err, res) =>{
-        if (err){
-            throw err;
-        }
-        console.table(res);
-        init();
-    })
-}
+let rolesList = ['Sales Lead', 'Salesperson', 'Lead Engineer','Software Engineer', 'Accountant','Legal Team Lead', 'Lawyer'];
 
 function init(){
     inquirer.prompt({
@@ -77,15 +70,52 @@ function init(){
         }
     })
 }
-
+//----------FIX THIS-------------------
 function addDepartment(){
-    console.log("Adding Department");
+    inquirer.prompt([
+        {
+            type: "input",
+            message: "What is the new department?",
+            name: "new_department"
+        }
+    ]).then(res => {
+        const newDept = new departments(res.new_department);
+        newDept.postNewDepartment();
+        init();
+    });
 }
-
+//----------FIX THIS---------------------
 function addRole(){
-    console.log("Adding Role");
+    inquirer.prompt([
+        {
+            type: "input",
+            message: "What is the new role?",
+            name: "new_role"
+        },
+        {
+            type: "input",
+            message: "What is the salary of the role?",
+            name: "salary"
+        },
+        {
+            type: "list",
+            message: "Choose a department for this role.",
+            name: "department",
+            // choices: departments
+        },
+        {
+            type: "list",
+            message: "Who is the manager for the employee?",
+            name: "manager",
+            // choices: managers
+        }
+    ]).then(res => {
+        const newRole = new roles(res.new_role,res.salary,res.department,res.manager);
+        newRole.postNewRole();
+        init();
+    });
 }
-
+//----------FIX THIS---------------------
 function addEmployee(){
     inquirer.prompt([
         {
@@ -102,27 +132,17 @@ function addEmployee(){
             type: "list",
             message: "Choose a role for employee.",
             name: "role",
-            choices: roles
+            // choices: 
         },
         {
             type: "list",
             message: "Who is the manager for the employee?",
             name: "manager",
-            choices: ['null']
+            // choices: 
         }
-    ]).then(response => {
-        connection.query("INSERT INTO employee SET ?",{
-            first_name: response.first_name,
-            last_name: response.last_name,
-            role_id: null,
-            manager_id: null
-        },(err, res) =>{
-            if (err){
-                throw err;
-            }
-            console.table(res);
-            init();
-        })
+    ]).then(res => {
+        const newEmployee = new employees(res.first_name,res.last_name,res.role,res.manager);
+        newEmployee.postNewEmployee();
     });
 }
 
@@ -154,7 +174,7 @@ function viewRoles(){
         init();
     });
 }
-
+//---------WRITE THIS------------------------
 function updateEmployeeRoles(){
     console.log("Updating Employee Role");
     init();
@@ -163,4 +183,40 @@ function updateEmployeeRoles(){
 //End connection to database
 function endConnection() {
     connection.end();
+}
+
+function getDepartments(){
+    connection.query("SELECT * FROM department",(err, res) =>{
+        if (err)
+            throw err;
+        let departments = [];
+        res.forEach(department => {
+            departments.push(department.name);
+        })
+        return departments;
+    });
+}
+
+function getManagers(){
+    connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL;",(err, res) =>{
+        if (err)
+            throw err;
+        let managers = [];
+        res.forEach(manager => {
+            managers.push(manager.first_name+" "+manager.last_name);
+        })
+        return managers;
+    });
+}
+
+function getRoles(){
+    connection.query("SELECT title FROM role;",(err, res) =>{
+        if (err)
+            throw err;
+        let roles = [];
+        res.forEach(role => {
+            roles.push(role.title);
+        })
+        return roles;
+    });
 }

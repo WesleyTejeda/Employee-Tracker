@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
     user: "root",
   
     // Your password
-    password: process.env.DB_PASS,
+    password: "<password>",
     database: "company_db"
 });
 
@@ -32,7 +32,7 @@ class roles {
         return this.department_id;
     }
     postNewRole(){
-        connection.query("INSERT INTO role SET ?",{
+        connection.query("INSERT INTO role SET ?;",{
             title: response.new_role,
             salary: response.salary,
             department_id: response.department,
@@ -42,6 +42,17 @@ class roles {
             }
             console.table(res);
         })
+    }
+    getAllRoles(){
+        let roles = [];
+        connection.query("SELECT title FROM role;",(err, res) =>{
+        if (err)
+            throw err;
+            res.forEach(role => {
+            roles.push(role.title);
+        })
+        })
+        return roles;
     }
 }
 

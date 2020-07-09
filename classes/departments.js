@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
     user: "root",
   
     // Your password
-    password: process.env.DB_PASS,
+    password: '<password>',
     database: "company_db"
 });
 
@@ -27,11 +27,20 @@ class departments {
         connection.query("INSERT INTO department SET ?",{
             name: this.getName()
         },(err, res) =>{
-            if (err){
+            if (err)
                 throw err;
-            }
-            console.log(res);
         })
+    }
+    returnAllDepartments(){
+        let departments = [];
+        connection.query("SELECT name FROM department",(err, res) =>{
+            if (err)
+                throw err;
+            res.forEach(department => {
+                departments.push(department.name);
+            })
+        });
+        return departments;
     }
 }
 

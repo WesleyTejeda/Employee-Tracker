@@ -36,17 +36,26 @@ class employees {
         return this.manager_id;
     }
     postNewEmployee(){
-        connection.query("INSERT INTO employee SET ?",{
+        connection.query("INSERT INTO employee SET ?;",{
             first_name: this.getFirstName(),
             last_name: this.getLastName(),
             role_id: this.getId(),
             manager_id: this.getManagerId()
         },(err, res) =>{
-            if (err){
+            if (err)
                 throw err;
-            }
-            console.log(res);
         })
+    }
+    returnAllManagers(){
+        let managers = [];
+        connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL;",(err, res) =>{
+            if (err)
+                throw err;
+            res.forEach(manager => {
+                managers.push(manager.first_name+" "+manager.last_name);
+            })
+        });
+        return managers;
     }
 }
 

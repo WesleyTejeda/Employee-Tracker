@@ -33,9 +33,9 @@ class roles {
     }
     postNewRole(){
         connection.query("INSERT INTO role SET ?;",{
-            title: response.new_role,
-            salary: response.salary,
-            department_id: response.department,
+            title: this.title,
+            salary: this.salary,
+            department_id: this.department,
         },(err, res) =>{
             if (err){
                 throw err;

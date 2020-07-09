@@ -6,6 +6,8 @@ const roles = require("./classes/roles");
 const employees = require("./classes/employees");
 require("dotenv").config();
 
+const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Quit'];
+
 var connection = mysql.createConnection({
     host: "localhost",
   
@@ -26,7 +28,6 @@ connection.connect(function(err) {
     init();
 });
 
-const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Quit'];
 
 
 function init(){
@@ -83,7 +84,7 @@ function addRole(){
         {
             type: "input",
             message: "What is the new role?",
-            name: "new_role"
+            name: "role"
         },
         {
             type: "input",
@@ -95,15 +96,9 @@ function addRole(){
             message: "Choose a department for this role.",
             name: "department",
             choices: deptList
-        },
-        {
-            type: "list",
-            message: "Who is the manager for the employee?",
-            name: "manager",
-            choices: managersList
         }
     ]).then(res => {
-        const newRole = new roles(res.new_role,res.salary,res.department,res.manager);
+        const newRole = new roles(res.role,res.salary,res.department);
         newRole.postNewRole();
         init();
     });
@@ -170,8 +165,44 @@ function viewRoles(){
 }
 //---------WRITE THIS------------------------
 function updateEmployeeRoles(){
-    console.log("Updating Employee Role");
-    init();
+    let employeesList = getEmployees();
+    let rolesList = getRoles();
+    let timer = setInterval(updatePrompt, 100);
+    function updatePrompt(){
+        clearInterval(timer);
+        inquirer.prompt([
+            {
+                type: "list",
+                message: "Choose the employee.",
+                name: "employee",
+                choices: employeesList
+            },
+            {
+                type: "list",
+                message: "Choose a new role for the employee.",
+                name: "role",
+                choices: rolesList
+            }
+        ]).then(res => {
+            console.log(res);
+            let employeeName = res.employee.split(" ");
+            let employee ={
+                first_name: employeeName[0],
+                last_name: employeeName[1]
+            }
+            connection.query("UPDATE employee SET role_id=? WHERE first_name=?, last_name=?",[
+                    res.role,
+                    employee.first_name,
+                    employee.last_name
+                ],(err, res) =>{
+                if (err){
+                    throw err;
+                }
+                console.log(res.affectedRows);
+                init();
+            });
+        });    
+    }
 }
 
 //End connection to database
@@ -213,5 +244,17 @@ function getRoles(){
         })
     })
     return roles;
+}
+
+function getEmployees(){
+    let employees = [];
+    connection.query("SELECT first_name, last_name FROM employee;",(err, res) =>{
+        if (err)
+            throw err;
+        res.forEach(employee => {
+            employees.push(employee.first_name+" "+employee.last_name);
+        })
+    })
+    return employees;
 }
 

@@ -23,7 +23,7 @@ class employees {
         this.manager_id = manager_id;
     }
 
-    getName(){
+    getFirstName(){
         return this.first_name;
     }
     getLastName(){

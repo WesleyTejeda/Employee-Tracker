@@ -26,9 +26,8 @@ connection.connect(function(err) {
     init();
 });
 
-let choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Quit'];
+const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Quit'];
 
-let rolesList = ['Sales Lead', 'Salesperson', 'Lead Engineer','Software Engineer', 'Accountant','Legal Team Lead', 'Lawyer'];
 
 function init(){
     inquirer.prompt({
@@ -38,31 +37,24 @@ function init(){
         choices: choices
     }).then((option) => {
         if(option.choice == 'Add Department'){
-            //Do something
             addDepartment();
         }
         if(option.choice == 'Add Role'){
-            //Do something
             addRole();
         }
         if(option.choice == 'Add Employee'){
-            //Do something
             addEmployee();
         }
         if(option.choice == 'View Departments'){
-            //Do something
             viewDepartments();
         }
         if(option.choice == 'View Roles'){
-            //Do something
             viewRoles();
         }
         if(option.choice == 'View Employees'){
-            //Do something
             viewEmployees();
         }
         if(option.choice == 'Update Employee Roles'){
-            //Do something
             updateEmployeeRoles();
         }
         if(option.choice == 'Quit'){
@@ -70,7 +62,6 @@ function init(){
         }
     })
 }
-//----------FIX THIS-------------------
 function addDepartment(){
     inquirer.prompt([
         {
@@ -84,8 +75,10 @@ function addDepartment(){
         init();
     });
 }
-//----------FIX THIS---------------------
+
 function addRole(){
+    let deptList = getDepartments();
+    let managersList = getManagers();
     inquirer.prompt([
         {
             type: "input",
@@ -101,13 +94,13 @@ function addRole(){
             type: "list",
             message: "Choose a department for this role.",
             name: "department",
-            // choices: departments
+            choices: deptList
         },
         {
             type: "list",
             message: "Who is the manager for the employee?",
             name: "manager",
-            // choices: managers
+            choices: managersList
         }
     ]).then(res => {
         const newRole = new roles(res.new_role,res.salary,res.department,res.manager);
@@ -115,8 +108,9 @@ function addRole(){
         init();
     });
 }
-//----------FIX THIS---------------------
 function addEmployee(){
+    let rolesList = getRoles();
+    let managersList = getManagers();
     inquirer.prompt([
         {
             type: "input",
@@ -132,13 +126,13 @@ function addEmployee(){
             type: "list",
             message: "Choose a role for employee.",
             name: "role",
-            // choices: 
+            choices: rolesList
         },
         {
             type: "list",
             message: "Who is the manager for the employee?",
             name: "manager",
-            // choices: 
+            choices: managersList
         }
     ]).then(res => {
         const newEmployee = new employees(res.first_name,res.last_name,res.role,res.manager);
@@ -186,37 +180,38 @@ function endConnection() {
 }
 
 function getDepartments(){
-    connection.query("SELECT * FROM department",(err, res) =>{
+    let departments = [];
+    connection.query("SELECT name FROM department",(err, res) =>{
         if (err)
             throw err;
-        let departments = [];
         res.forEach(department => {
             departments.push(department.name);
         })
-        return departments;
     });
+    return departments;
 }
 
 function getManagers(){
+    let managers = [];
     connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL;",(err, res) =>{
         if (err)
             throw err;
-        let managers = [];
         res.forEach(manager => {
             managers.push(manager.first_name+" "+manager.last_name);
         })
-        return managers;
     });
+    return managers;
 }
 
 function getRoles(){
+    let roles = [];
     connection.query("SELECT title FROM role;",(err, res) =>{
         if (err)
             throw err;
-        let roles = [];
         res.forEach(role => {
             roles.push(role.title);
         })
-        return roles;
-    });
+    })
+    return roles;
 }
+

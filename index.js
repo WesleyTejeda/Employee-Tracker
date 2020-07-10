@@ -174,7 +174,7 @@ function viewEmployees(){
 }
 
 function viewRoles(){
-    connection.query("SELECT * FROM role",(err, res) =>{
+    connection.query("SELECT role.id, role.title, role.salary, department.name as department FROM role JOIN department WHERE role.department_id = department.id;",(err, res) =>{
         if (err){
             throw err;
         }

@@ -6,7 +6,7 @@ const roles = require("./classes/roles");
 const employees = require("./classes/employees");
 require("dotenv").config();
 
-const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Quit'];
+const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Update Employee Manager','Quit'];
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -69,6 +69,9 @@ function init(){
         }
         if(option.choice == 'Update Employee Roles'){
             updateEmployeeRoles();
+        }
+        if(option.choice == 'Update Employee Manager'){
+            updateEmployeeManager();
         }
         if(option.choice == 'Quit'){
             endConnection();
@@ -161,8 +164,8 @@ function viewDepartments(){
 }
 
 function viewEmployees(){
-    let query = `SELECT employee.id, employee.first_Name, employee.last_name, role.title, department.name AS department, role.salary, employee.manager_id AS Manager
-    FROM employee JOIN department  JOIN role 
+    let query = `SELECT employee.id, employee.first_Name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT_WS(" ", manager.first_name, manager.last_name) as manager
+    FROM employee JOIN department JOIN role LEFT JOIN employee manager ON employee.manager_id = manager.id
     WHERE employee.role_id = role.id AND role.department_id = department.id;`
     connection.query(query,(err, res) =>{
         if (err){
@@ -222,7 +225,45 @@ async function updateEmployeeRoles(){
         });    
     }
 }
-
+async function updateEmployeeManager(){
+    let employeesList = await getEmployees();
+    let managersList = await getManagers();
+    //Nest list functions
+    updatePrompt();
+    function updatePrompt(){
+        inquirer.prompt([
+            {
+                type: "list",
+                message: "Choose the employee.",
+                name: "employee",
+                choices: employeesList
+            },
+            {
+                type: "list",
+                message: "Choose a new manager for the employee.",
+                name: "manager",
+                choices: managersList
+            }
+        ]).then(async res => {
+            let managerId = await translateManager(res.manager);
+            let employeeName = res.employee.split(" ");
+            let employee ={
+                first_name: employeeName[0],
+                last_name: employeeName[1]
+            }
+            connection.query("UPDATE employee SET manager_id=? WHERE first_name=? AND last_name=?",[
+                    managerId,
+                    employee.first_name,
+                    employee.last_name
+                ],(err, res) =>{
+                if (err){
+                    throw err;
+                }
+                init();
+            });
+        });    
+    }
+}
 //End connection to database
 function endConnection() {
     connection.end();
@@ -244,7 +285,7 @@ function getDepartments(){
 
 function getManagers(){
     return new Promise(resolve => {
-        connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL;",(err, res) =>{
+        connection.query("SELECT DISTINCT employee.first_name, employee.last_name FROM employee JOIN employee manager on manager.manager_id = employee.id;",(err, res) =>{
             if (err)
                 throw err;
             let managers = [];

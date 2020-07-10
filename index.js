@@ -25,10 +25,22 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId + "\n");
+    console.log(
+        `
+        .%%%%%%..%%...%%..%%%%%...%%.......%%%%...%%..%%..%%%%%%..%%%%%%.
+        .%%......%%%.%%%..%%..%%..%%......%%..%%...%%%%...%%......%%.....
+        .%%%%....%%.%.%%..%%%%%...%%......%%..%%....%%....%%%%....%%%%...
+        .%%......%%...%%..%%......%%......%%..%%....%%....%%......%%.....
+        .%%%%%%..%%...%%..%%......%%%%%%...%%%%.....%%....%%%%%%..%%%%%%.
+        .................................................................
+             .%%%%%%..%%%%%....%%%%....%%%%...%%..%%..%%%%%%..%%%%%..
+             ...%%....%%..%%..%%..%%..%%..%%..%%.%%...%%......%%..%%.
+             ...%%....%%%%%...%%%%%%..%%......%%%%....%%%%....%%%%%..
+             ...%%....%%..%%..%%..%%..%%..%%..%%.%%...%%......%%..%%.
+             ...%%....%%..%%..%%..%%...%%%%...%%..%%..%%%%%%..%%..%%.
+             ........................................................`);
     init();
 });
-
-
 
 function init(){
     inquirer.prompt({
@@ -77,9 +89,9 @@ function addDepartment(){
     });
 }
 
-function addRole(){
-    let deptList = getDepartments();
-    let managersList = getManagers();
+//---------FIX------------------------
+async function addRole(){
+    let deptList = await getDepartments();
     inquirer.prompt([
         {
             type: "input",
@@ -97,15 +109,16 @@ function addRole(){
             name: "department",
             choices: deptList
         }
-    ]).then(res => {
-        const newRole = new roles(res.role,res.salary,res.department);
+    ]).then(async function(res){
+        let deptId = await translateDepartment(res.department);        
+        const newRole = new roles(res.role,res.salary,deptId);
         newRole.postNewRole();
         init();
     });
 }
-function addEmployee(){
-    let rolesList = getRoles();
-    let managersList = getManagers();
+async function addEmployee(){
+    let rolesList = await getRoles();
+    let managersList = await getManagers();
     inquirer.prompt([
         {
             type: "input",
@@ -129,9 +142,12 @@ function addEmployee(){
             name: "manager",
             choices: managersList
         }
-    ]).then(res => {
-        const newEmployee = new employees(res.first_name,res.last_name,res.role,res.manager);
+    ]).then(async res => {
+        let roleId = await translateRole(res.role);
+        let managerId = await translateManager(res.manager);
+        const newEmployee = new employees(res.first_name,res.last_name,roleId,managerId);
         newEmployee.postNewEmployee();
+        init();
     });
 }
 
@@ -163,13 +179,13 @@ function viewRoles(){
         init();
     });
 }
-//---------WRITE THIS------------------------
-function updateEmployeeRoles(){
-    let employeesList = getEmployees();
-    let rolesList = getRoles();
-    let timer = setInterval(updatePrompt, 100);
+//---------FIX------------------------
+async function updateEmployeeRoles(){
+    let employeesList = await getEmployees();
+    let rolesList = await getRoles();
+    //Nest list functions
+    updatePrompt();
     function updatePrompt(){
-        clearInterval(timer);
         inquirer.prompt([
             {
                 type: "list",
@@ -183,22 +199,21 @@ function updateEmployeeRoles(){
                 name: "role",
                 choices: rolesList
             }
-        ]).then(res => {
-            console.log(res);
+        ]).then(async res => {
+            let roleId = await translateRole(res.role);
             let employeeName = res.employee.split(" ");
             let employee ={
                 first_name: employeeName[0],
                 last_name: employeeName[1]
             }
-            connection.query("UPDATE employee SET role_id=? WHERE first_name=?, last_name=?",[
-                    res.role,
+            connection.query("UPDATE employee SET role_id=? WHERE first_name=? AND last_name=?",[
+                    roleId,
                     employee.first_name,
                     employee.last_name
                 ],(err, res) =>{
                 if (err){
                     throw err;
                 }
-                console.log(res.affectedRows);
                 init();
             });
         });    
@@ -211,50 +226,98 @@ function endConnection() {
 }
 
 function getDepartments(){
-    let departments = [];
-    connection.query("SELECT name FROM department",(err, res) =>{
-        if (err)
-            throw err;
-        res.forEach(department => {
-            departments.push(department.name);
+    return new Promise(resolve => {
+        connection.query("SELECT name FROM department",(err, res) =>{
+            if (err)
+                throw err;
+            let departments = [];
+            res.forEach(department => {
+                departments.push(department.name);
+            })
+            resolve(departments);
         })
-    });
-    return departments;
+    })
 }
 
 function getManagers(){
-    let managers = [];
-    connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL;",(err, res) =>{
-        if (err)
-            throw err;
-        res.forEach(manager => {
-            managers.push(manager.first_name+" "+manager.last_name);
+    return new Promise(resolve => {
+        connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL;",(err, res) =>{
+            if (err)
+                throw err;
+            let managers = [];
+            res.forEach(manager => {
+                managers.push(manager.first_name+" "+manager.last_name);
+            })
+            resolve(managers);
         })
-    });
-    return managers;
+    })
 }
 
 function getRoles(){
-    let roles = [];
-    connection.query("SELECT title FROM role;",(err, res) =>{
-        if (err)
-            throw err;
-        res.forEach(role => {
-            roles.push(role.title);
+    return new Promise(resolve => {
+        connection.query("SELECT * FROM role ",(err, res) =>{
+            if (err)
+                throw err;
+            let roles = [];
+            res.forEach(role => {
+                roles.push(role.title);
+            })
+            resolve(roles);
         })
     })
-    return roles;
 }
 
 function getEmployees(){
-    let employees = [];
-    connection.query("SELECT first_name, last_name FROM employee;",(err, res) =>{
-        if (err)
-            throw err;
-        res.forEach(employee => {
-            employees.push(employee.first_name+" "+employee.last_name);
+    return new Promise(resolve => {
+        connection.query("SELECT * FROM employee",(err, res) =>{
+            if (err)
+                throw err;
+            let employees = [];
+            res.forEach(employee => {
+                employees.push(employee.first_name+" "+employee.last_name);
+            })
+            resolve(employees);
         })
     })
-    return employees;
 }
 
+function translateDepartment(department) {
+    return new Promise(resolve => {
+        connection.query("SELECT * FROM department WHERE ?",{name: department},(err, res) =>{
+            if (err)
+                throw err;
+            resolve(res[0].id)
+        })
+    })
+}
+
+function translateManager(manager) {
+    return new Promise(resolve => {
+        let managerInfo = manager.split(" ");
+        connection.query("SELECT * FROM employee WHERE ? AND ?",[{first_name: managerInfo[0]}, {last_name: managerInfo[1]}],(err, res) =>{
+            if (err)
+                throw err;
+            resolve(res[0].id)
+        })
+    })
+}
+
+function translateRole(role) {
+    return new Promise(resolve => {
+        connection.query("SELECT * FROM role WHERE ?",{title: role},(err, res) =>{
+            if (err)
+                throw err;
+            resolve(res[0].id)
+        })
+    })
+}
+
+function translateDepartment(department) {
+    return new Promise(resolve => {
+        connection.query("SELECT * FROM department WHERE ?",{name: department},(err, res) =>{
+            if (err)
+                throw err;
+            resolve(res[0].id)
+        })
+    })
+}

@@ -161,7 +161,10 @@ function viewDepartments(){
 }
 
 function viewEmployees(){
-    connection.query("SELECT * FROM employee",(err, res) =>{
+    let query = `SELECT employee.id, employee.first_Name, employee.last_name, role.title, department.name AS department, role.salary, employee.manager_id AS Manager
+    FROM employee JOIN department  JOIN role 
+    WHERE employee.role_id = role.id AND role.department_id = department.id;`
+    connection.query(query,(err, res) =>{
         if (err){
             throw err;
         }

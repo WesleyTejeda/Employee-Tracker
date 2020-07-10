@@ -33,14 +33,13 @@ class roles {
     }
     postNewRole(){
         connection.query("INSERT INTO role SET ?;",{
-            title: this.title,
-            salary: this.salary,
-            department_id: this.department,
+            title: this.getTitle(),
+            salary: this.getSalary(),
+            department_id: this.getDepartmentId(),
         },(err, res) =>{
             if (err){
                 throw err;
             }
-            console.table(res);
         })
     }
     getAllRoles(){
@@ -50,7 +49,7 @@ class roles {
             throw err;
             res.forEach(role => {
             roles.push(role.title);
-        })
+            })
         })
         return roles;
     }

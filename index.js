@@ -297,10 +297,45 @@ async function deleteDepartments(){
     })
 }
 async function deleteRoles(){
-
+    let roles = await getRoles();
+    inquirer.prompt(
+        {
+            type: "list",
+            message: "Choose the role you wish to delete.",
+            name: "role",
+            choices: roles
+        }
+    ).then(res => {
+        console.log(`${res.role} has been deleted.`);
+        connection.query("DELETE FROM role WHERE ?;",{title: res.role}, (err, res) => {
+            if (err)
+                throw err;
+            init();
+        })
+    })
 }
 async function deleteEmployees(){
-
+    let employees = await getEmployees();
+    inquirer.prompt(
+        {
+            type: "list",
+            message: "Choose the employee you wish to delete.",
+            name: "employee",
+            choices: employees
+        }
+    ).then(res => {
+        console.log(`${res.employee} has been deleted.`);
+        let employee = res.employee.split(" ");
+        connection.query("DELETE FROM employee WHERE ? AND ?;",
+        [
+            {first_name: employee[0]},
+            {last_name: employee[1]}
+        ], (err, res) => {
+            if (err)
+                throw err;
+            init();
+        })
+    })
 }
 //End connection to database
 function endConnection() {

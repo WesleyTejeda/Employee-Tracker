@@ -121,7 +121,8 @@ async function addRole(){
 }
 async function addEmployee(){
     let rolesList = await getRoles();
-    let managersList = await getManagers();
+    let employeesList = await getEmployees();
+    employeesList.unshift("null");
     inquirer.prompt([
         {
             type: "input",
@@ -141,15 +142,21 @@ async function addEmployee(){
         },
         {
             type: "list",
-            message: "Who is the manager for the employee?",
+            message: "Who is the manager for the employee? If this employee will be a new manager pick 'null'",
             name: "manager",
-            choices: managersList
+            choices: employeesList
         }
     ]).then(async res => {
         let roleId = await translateRole(res.role);
-        let managerId = await translateManager(res.manager);
-        const newEmployee = new employees(res.first_name,res.last_name,roleId,managerId);
-        newEmployee.postNewEmployee();
+        if(res.manager === "null"){
+            const newEmployee = new employees(res.first_name,res.last_name,roleId,null);
+            newEmployee.postNewEmployee();
+        }
+        else {
+            let managerId = await translateManager(res.manager);
+            const newEmployee = new employees(res.first_name,res.last_name,roleId,managerId);
+            newEmployee.postNewEmployee();
+        }        
         init();
     });
 }
@@ -185,7 +192,6 @@ function viewRoles(){
         init();
     });
 }
-//---------FIX------------------------
 async function updateEmployeeRoles(){
     let employeesList = await getEmployees();
     let rolesList = await getRoles();
@@ -227,7 +233,6 @@ async function updateEmployeeRoles(){
 }
 async function updateEmployeeManager(){
     let employeesList = await getEmployees();
-    let managersList = await getManagers();
     //Nest list functions
     updatePrompt();
     function updatePrompt(){
@@ -242,7 +247,7 @@ async function updateEmployeeManager(){
                 type: "list",
                 message: "Choose a new manager for the employee.",
                 name: "manager",
-                choices: managersList
+                choices: employeesList
             }
         ]).then(async res => {
             let managerId = await translateManager(res.manager);
@@ -283,19 +288,19 @@ function getDepartments(){
     })
 }
 
-function getManagers(){
-    return new Promise(resolve => {
-        connection.query("SELECT DISTINCT employee.first_name, employee.last_name FROM employee JOIN employee manager on manager.manager_id = employee.id;",(err, res) =>{
-            if (err)
-                throw err;
-            let managers = [];
-            res.forEach(manager => {
-                managers.push(manager.first_name+" "+manager.last_name);
-            })
-            resolve(managers);
-        })
-    })
-}
+// function getManagers(){
+//     return new Promise(resolve => {
+//         connection.query("SELECT DISTINCT employee.first_name, employee.last_name FROM employee JOIN employee manager on manager.manager_id = employee.id;",(err, res) =>{
+//             if (err)
+//                 throw err;
+//             let managers = [];
+//             res.forEach(manager => {
+//                 managers.push(manager.first_name+" "+manager.last_name);
+//             })
+//             resolve(managers);
+//         })
+//     })
+// }
 
 function getRoles(){
     return new Promise(resolve => {
@@ -337,28 +342,23 @@ function translateDepartment(department) {
 
 function translateManager(manager) {
     return new Promise(resolve => {
-        let managerInfo = manager.split(" ");
-        connection.query("SELECT * FROM employee WHERE ? AND ?",[{first_name: managerInfo[0]}, {last_name: managerInfo[1]}],(err, res) =>{
-            if (err)
-                throw err;
-            resolve(res[0].id)
-        })
+        if(manager === "null"){
+            resolve("null");
+        }
+        else {
+            let managerInfo = manager.split(" ");
+            connection.query("SELECT * FROM employee WHERE ? AND ?",[{first_name: managerInfo[0]}, {last_name: managerInfo[1]}],(err, res) =>{
+                if (err)
+                    throw err;
+                resolve(res[0].id)
+            })
+        }
     })
 }
 
 function translateRole(role) {
     return new Promise(resolve => {
         connection.query("SELECT * FROM role WHERE ?",{title: role},(err, res) =>{
-            if (err)
-                throw err;
-            resolve(res[0].id)
-        })
-    })
-}
-
-function translateDepartment(department) {
-    return new Promise(resolve => {
-        connection.query("SELECT * FROM department WHERE ?",{name: department},(err, res) =>{
             if (err)
                 throw err;
             resolve(res[0].id)

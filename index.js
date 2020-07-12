@@ -6,7 +6,7 @@ const roles = require("./classes/roles");
 const employees = require("./classes/employees");
 require("dotenv").config();
 
-const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Update Employee Manager','Delete Departments','Delete Roles','Delete Employees','Quit'];
+const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','View Employees By Manager','Update Employee Roles','Update Employee Manager','Delete Departments','Delete Roles','Delete Employees','Quit'];
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -66,6 +66,9 @@ function init(){
         }
         if(option.choice == 'View Employees'){
             viewEmployees();
+        }
+        if(option.choice == "View Employees By Manager"){
+            viewEmployeesByManager();
         }
         if(option.choice == 'Update Employee Roles'){
             updateEmployeeRoles();
@@ -183,6 +186,17 @@ function viewEmployees(){
     let query = `SELECT employee.id, employee.first_Name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT_WS(" ", manager.first_name, manager.last_name) as manager
     FROM employee JOIN department JOIN role LEFT JOIN employee manager ON employee.manager_id = manager.id
     WHERE employee.role_id = role.id AND role.department_id = department.id;`
+    connection.query(query,(err, res) =>{
+        if (err){
+            throw err;
+        }
+        console.table(res);
+        init();
+    });
+}
+
+function viewEmployeesByManager(){
+    let query = `SELECT concat_ws(" ",employee.first_name, employee.last_name) as Manager, concat_ws(" ",manager.first_name, manager.last_name) as Employee FROM employee JOIN employee manager on manager.manager_id = employee.id;`
     connection.query(query,(err, res) =>{
         if (err){
             throw err;

@@ -6,7 +6,7 @@ const roles = require("./classes/roles");
 const employees = require("./classes/employees");
 require("dotenv").config();
 
-const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Update Employee Manager','Quit'];
+const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','Update Employee Roles','Update Employee Manager','Delete Departments','Delete Roles','Delete Employees','Quit'];
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -72,6 +72,15 @@ function init(){
         }
         if(option.choice == 'Update Employee Manager'){
             updateEmployeeManager();
+        }
+        if(option.choice == 'Delete Departments'){
+            deleteDepartments();
+        }
+        if(option.choice == 'Delete Roles'){
+            deleteRoles();
+        }
+        if(option.choice == 'Delete Employees'){
+            deleteEmployees();
         }
         if(option.choice == 'Quit'){
             endConnection();
@@ -269,6 +278,30 @@ async function updateEmployeeManager(){
         });    
     }
 }
+async function deleteDepartments(){
+    let departments = await getDepartments();
+    inquirer.prompt(
+        {
+            type: "list",
+            message: "Choose the department you wish to delete.",
+            name: "dept",
+            choices: departments
+        }
+    ).then(res => {
+        console.log(`${res.dept} has been deleted.`);
+        connection.query("DELETE FROM department WHERE ?;",{name: res.dept}, (err, res) => {
+            if (err)
+                throw err;
+            init();
+        })
+    })
+}
+async function deleteRoles(){
+
+}
+async function deleteEmployees(){
+
+}
 //End connection to database
 function endConnection() {
     connection.end();
@@ -287,20 +320,6 @@ function getDepartments(){
         })
     })
 }
-
-// function getManagers(){
-//     return new Promise(resolve => {
-//         connection.query("SELECT DISTINCT employee.first_name, employee.last_name FROM employee JOIN employee manager on manager.manager_id = employee.id;",(err, res) =>{
-//             if (err)
-//                 throw err;
-//             let managers = [];
-//             res.forEach(manager => {
-//                 managers.push(manager.first_name+" "+manager.last_name);
-//             })
-//             resolve(managers);
-//         })
-//     })
-// }
 
 function getRoles(){
     return new Promise(resolve => {

@@ -6,7 +6,7 @@ const roles = require("./classes/roles");
 const employees = require("./classes/employees");
 require("dotenv").config();
 
-const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','View Employees By Manager','Update Employee Roles','Update Employee Manager','Delete Departments','Delete Roles','Delete Employees','Quit'];
+const choices = ['Add Department','Add Role','Add Employee','View Departments','View Roles','View Employees','View Employees By Manager','View Total Department Budget','Update Employee Roles','Update Employee Manager','Delete Departments','Delete Roles','Delete Employees','Quit'];
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -69,6 +69,9 @@ function init(){
         }
         if(option.choice == "View Employees By Manager"){
             viewEmployeesByManager();
+        }
+        if(option.choice == "View Total Department Budget"){
+            viewTotalDeptBudget();
         }
         if(option.choice == 'Update Employee Roles'){
             updateEmployeeRoles();
@@ -215,6 +218,17 @@ function viewRoles(){
         init();
     });
 }
+
+function viewTotalDeptBudget(){
+    connection.query("SELECT department.name AS Department, SUM(role.salary) as Budget FROM department JOIN role WHERE role.department_id = department.id GROUP BY department.name;",(err, res) =>{
+        if (err){
+            throw err;
+        }
+        console.table(res);
+        init();
+    });
+}
+
 async function updateEmployeeRoles(){
     let employeesList = await getEmployees();
     let rolesList = await getRoles();

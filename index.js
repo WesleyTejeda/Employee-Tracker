@@ -107,7 +107,6 @@ function addDepartment(){
     });
 }
 
-//---------FIX------------------------
 async function addRole(){
     let deptList = await getDepartments();
     inquirer.prompt([
@@ -232,7 +231,6 @@ function viewTotalDeptBudget(){
 async function updateEmployeeRoles(){
     let employeesList = await getEmployees();
     let rolesList = await getRoles();
-    //Nest list functions
     updatePrompt();
     function updatePrompt(){
         inquirer.prompt([
@@ -270,7 +268,6 @@ async function updateEmployeeRoles(){
 }
 async function updateEmployeeManager(){
     let employeesList = await getEmployees();
-    //Nest list functions
     updatePrompt();
     function updatePrompt(){
         inquirer.prompt([
@@ -365,11 +362,11 @@ async function deleteEmployees(){
         })
     })
 }
-//End connection to database
 function endConnection() {
     connection.end();
 }
 
+//Promise retrieval Functions
 function getDepartments(){
     return new Promise(resolve => {
         connection.query("SELECT name FROM department",(err, res) =>{

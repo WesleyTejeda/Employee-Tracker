@@ -42,17 +42,6 @@ class roles {
             }
         })
     }
-    getAllRoles(){
-        let roles = [];
-        connection.query("SELECT title FROM role;",(err, res) =>{
-        if (err)
-            throw err;
-            res.forEach(role => {
-            roles.push(role.title);
-            })
-        })
-        return roles;
-    }
 }
 
 module.exports = roles;

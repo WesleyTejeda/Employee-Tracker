@@ -46,17 +46,6 @@ class employees {
                 throw err;
         })
     }
-    returnAllManagers(){
-        let managers = [];
-        connection.query("SELECT first_name, last_name FROM employee WHERE manager_id IS NULL;",(err, res) =>{
-            if (err)
-                throw err;
-            res.forEach(manager => {
-                managers.push(manager.first_name+" "+manager.last_name);
-            })
-        });
-        return managers;
-    }
 }
 
 module.exports = employees;

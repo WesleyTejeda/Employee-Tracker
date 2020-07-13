@@ -31,17 +31,6 @@ class departments {
                 throw err;
         })
     }
-    returnAllDepartments(){
-        let departments = [];
-        connection.query("SELECT name FROM department",(err, res) =>{
-            if (err)
-                throw err;
-            res.forEach(department => {
-                departments.push(department.name);
-            })
-        });
-        return departments;
-    }
 }
 
 module.exports = departments;

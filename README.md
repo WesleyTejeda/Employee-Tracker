@@ -2,6 +2,9 @@
 # Employee-Tracker
 By ```Wesley Tejeda```
 Repository Link: (https://github.com/wesleytejeda/Employee-Tracker)
+## Demo
+Click on the thumbnail below to view the demo.<br>
+[![Watch the demo](https://img.youtube.com/vi/wc5_hsrj6qw/hqdefault.jpg)](https://youtu.be/wc5_hsrj6qw)
 ## Description
 In this repository I've created an app that manages the employees, departments, and roles of a company with Add, View and Delete functions to manage company info.
 

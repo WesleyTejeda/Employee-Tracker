@@ -20,9 +20,6 @@ First grab the schema and seed file and run in MySQL to populate database. Then 
 ## Contributing
 Pull requests are allowed. Please create an issue for any new ideas or bug fixes.
 
-## Tests
-None
-
 ## Questions
 Contact me via the email posted below, or message me directly on github.
 
